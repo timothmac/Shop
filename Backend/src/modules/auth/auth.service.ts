@@ -1,26 +1,66 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+    private jwtService: JwtService,
+  ) {}
+
+  async register(createAuthDto: CreateAuthDto): Promise<{ accessToken: string }> {
+    const { email, password, role, fullName, address, phoneNumber } = createAuthDto;
+
+    // Проверяем, существует ли пользователь
+    const existingUser = await this.usersRepository.findOne({ where: { email } });
+    if (existingUser) {
+      throw new UnauthorizedException('User already created');
+    }
+
+    // Хешируем пароль
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Создаем пользователя
+    const user = this.usersRepository.create({
+      email,
+      password: hashedPassword,
+      role,
+      fullName,
+      address,
+      phoneNumber,
+    });
+
+    await this.usersRepository.save(user);
+
+    // Создаем JWT-токен
+    const payload = { id: user.id, email: user.email, role: user.role };
+
+    console.log("\n role is " + payload.role)
+    const accessToken = this.jwtService.sign(payload);
+    const decodedToken = this.jwtService.decode(accessToken);
+    console.log("\n Generated JWT payload:", decodedToken);
+  
+    return { accessToken };
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async login(email: string, password: string): Promise<{ accessToken: string }> {
+    const user = await this.usersRepository.findOne({ where: { email } });
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Wrong email or password');
+    }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+    // Создаем JWT-токен
+    const payload = { id: user.id, email: user.email, role: user.role };
+    console.log("\n role is " + payload.role)
+    const accessToken = this.jwtService.sign(payload);
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    return { accessToken };
   }
 }
