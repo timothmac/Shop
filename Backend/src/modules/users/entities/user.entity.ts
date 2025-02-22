@@ -17,6 +17,15 @@ export class User {
   @Column({ default: 'client' })
   role: string;
 
+  @Column({ nullable: true })
+  fullName?: string;
+
+  @Column({ nullable: true })
+  address?: string;
+
+  @Column({ nullable: true })
+  phoneNumber?: string;
+
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
 
