@@ -1,21 +1,21 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { Order } from './order.entity';
 import { Product } from '../../products/entities/product.entity';
 
 @Entity()
-export class Cart {
+export class OrderItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.cart, { onDelete: 'CASCADE' })
-  user: User;
+  @ManyToOne(() => Order, (order) => order.orderItems, { onDelete: 'CASCADE' })
+  order: Order;
 
-  @ManyToOne(() => Product, (product) => product.cart, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Product, (product) => product.orderItems, { eager: true })
   product: Product;
 
   @Column('int')
   quantity: number;
 
   @Column('decimal')
-  totalPrice: number;
+  price: number;
 }
