@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  backendstore:
+    image: backendstore
+    build:
+      context: Backend
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000

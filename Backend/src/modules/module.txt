@@ -1,0 +1,28 @@
+# 📂 Создаём папку для модулей
+mkdir src/modules
+
+# 🔹 Группа: Аутентификация и пользователи
+nest g module modules/auth && mv src/modules/auth src/modules/authentication
+nest g module modules/users
+nest g module modules/roles
+
+# 🔹 Группа: Каталог товаров
+nest g module modules/products
+nest g module modules/categories
+nest g module modules/reviews
+
+# 🔹 Группа: Заказы и корзина
+nest g module modules/cart
+nest g module modules/orders
+nest g module modules/payments
+
+# 🔹 Группа: Доставка и склад
+nest g module modules/shipping
+nest g module modules/stock
+
+# 🔹 Группа: Чат и поддержка клиентов
+nest g module modules/chat
+nest g module modules/support
+
+# 🔹 Группа: Администрирование
+nest g module modules/admin
