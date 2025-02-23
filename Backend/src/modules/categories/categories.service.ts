@@ -1,26 +1,53 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  constructor(
+    @InjectRepository(Category)
+    private categoriesRepository: Repository<Category>,
+  ) {}
+
+
+  async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
+    const newCategory = this.categoriesRepository.create(createCategoryDto);
+    return this.categoriesRepository.save(newCategory);
   }
 
-  findAll() {
-    return `This action returns all categories`;
+
+  async findAll(): Promise<Category[]> {
+    return this.categoriesRepository.find({ relations: ['products'] }); // загружаем продукты в категории
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+
+  async findOne(id: string): Promise<Category> {
+    const category = await this.categoriesRepository.findOne({
+      where: { id },
+      relations: ['products'],
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category with id ${id} not found`);
+    }
+    return category;
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+ 
+  async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
+    const category = await this.findOne(id);
+    Object.assign(category, updateCategoryDto);
+    return this.categoriesRepository.save(category);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+
+  async remove(id: string): Promise<void> {
+    const result = await this.categoriesRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Category with id ${id} not found`);
+    }
   }
 }
