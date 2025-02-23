@@ -16,26 +16,38 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
+import { useCart } from "../../contetx/cartContext"; // Проверьте путь!
 
 // Симуляция базы данных товаров
 const products = [
   {
     id: 1,
     name: "АКВАПАНЕЛЬ – ЦЕМ. ПЛИТА ДЛЯ ВНУТРЕННИХ РАБОТ",
-    price: "452.17 ₴",
+    price: 452.17, // цена хранится как число для удобства вычислений
     article: "70184625194",
     unit: "м²",
-    image: "https://stroyzone.com/upload/iblock/950/70184625194.webp", // Замените на реальный URL
+    image: "https://stroyzone.com/upload/iblock/950/70184625194.webp",
     description:
-      "Возведение облицовок, перегородок или постройка стен осуществляется с помощью качественной цементной плиты Аквапанель...",
+      "Возведение облицовок, перегородок або постройка стен осуществляется с помощью качественной цементной плиты Аквапанель...",
+  },
+  {
+    id: 2,
+    name: "ggfgf",
+    price: 45, // цена хранится как число для удобства вычислений
+    article: "70184625194",
+    unit: "м²",
+    image: "https://stroyzone.com/upload/iblock/950/70184625194.webp",
+    description:
+      "Возведение облицовок, перегородок або постройка стен осуществляется с помощью качественной цементной плиты Аквапанель...",
   },
 ];
 
 export default function ProductPage() {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const [tab, setTab] = useState(0);
+  const { addToCart } = useCart(); // Получаем функцию добавления из контекста
 
   useEffect(() => {
     const foundProduct = products.find((p) => p.id === Number(id));
@@ -55,12 +67,23 @@ export default function ProductPage() {
     );
   }
 
+  const handleBuy = () => {
+    addToCart(product, quantity);
+    // По желанию, можно добавить уведомление о том, что товар добавлен в корзину.
+  };
+
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
       <Grid container spacing={4}>
-        {/* Изображение */}
+        {/* Изображение товара */}
         <Grid item xs={12} md={6}>
-          <CardMedia component="img" height="300" image={product.image} alt={product.name} sx={{ borderRadius: 2 }} />
+          <CardMedia
+            component="img"
+            height="300"
+            image={product.image}
+            alt={product.name}
+            sx={{ borderRadius: 2 }}
+          />
         </Grid>
 
         {/* Информация о товаре */}
@@ -75,7 +98,7 @@ export default function ProductPage() {
             Единицы измерения: {product.unit}
           </Typography>
           <Typography variant="h5" fontWeight="bold" color="primary" sx={{ mt: 2 }}>
-            {product.price}
+            {product.price} ₴
           </Typography>
 
           {/* Выбор количества */}
@@ -89,22 +112,31 @@ export default function ProductPage() {
             </IconButton>
           </Box>
 
-          <Button variant="contained" color="primary" sx={{ mt: 2, textTransform: "none", fontWeight: "bold", width: "100%" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              mt: 2,
+              textTransform: "none",
+              fontWeight: "bold",
+              width: "100%",
+            }}
+            onClick={handleBuy}
+          >
             Купити
           </Button>
         </Grid>
       </Grid>
 
-      {/* Табуляция "Описание", "Характеристики", "Отзывы" */}
+      {/* Табуляция "Опис", "Характеристики", "Відгуки" */}
       <Box sx={{ mt: 4 }}>
         <Tabs value={tab} onChange={(event, newValue) => setTab(newValue)}>
-          <Tab label="ОПИСАНИЕ" />
+          <Tab label="ОПИСАННЯ" />
           <Tab label="ХАРАКТЕРИСТИКИ" />
-          <Tab label="ОТЗЫВЫ (0)" />
+          <Tab label="ВІДГУКИ (0)" />
         </Tabs>
         <Divider sx={{ mb: 2 }} />
 
-        {/* Содержимое вкладок */}
         {tab === 0 && (
           <Typography variant="body1" color="textSecondary">
             {product.description}
@@ -112,12 +144,12 @@ export default function ProductPage() {
         )}
         {tab === 1 && (
           <Typography variant="body1" color="textSecondary">
-            Технические характеристики товара будут здесь...
+            Технічні характеристики товару будуть тут...
           </Typography>
         )}
         {tab === 2 && (
           <Typography variant="body1" color="textSecondary">
-            Пока отзывов нет. Будьте первым, кто оставит отзыв!
+            Поки відгуків немає. Будьте першим, хто залишить відгук!
           </Typography>
         )}
       </Box>

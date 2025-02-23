@@ -18,16 +18,12 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useCart } from "../contetx/cartContext"; // проверьте путь
 
-interface CartProps {
-  cart: { id: number; name: string; price: number; quantity: number }[];
-  setCart: React.Dispatch<React.SetStateAction<any[]>>;
-  open: boolean;
-  onClose: () => void;
-}
+export default function Cart({ open, onClose }: { open: boolean; onClose: () => void }) {
+  // Получаем cart и setCart из глобального контекста
+  const { cart, setCart } = useCart();
 
-export default function Cart({ cart, setCart, open, onClose }: CartProps) {
-  // Збільшення кількості
   const increaseQuantity = (id: number) => {
     setCart(
       cart.map((item) =>
@@ -36,7 +32,6 @@ export default function Cart({ cart, setCart, open, onClose }: CartProps) {
     );
   };
 
-  // Зменшення кількості
   const decreaseQuantity = (id: number) => {
     setCart(
       cart.map((item) =>
@@ -47,18 +42,12 @@ export default function Cart({ cart, setCart, open, onClose }: CartProps) {
     );
   };
 
-  // Видалення товару
   const removeItem = (id: number) => {
     setCart(cart.filter((item) => item.id !== id));
   };
 
-  // Підрахунок загальної суми
-  const totalPrice = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Додаємо скрол, якщо товарів більше 3
   const listStyle = {
     maxHeight: cart.length > 3 ? 300 : "auto",
     overflowY: cart.length > 3 ? "auto" : "visible",
@@ -98,11 +87,7 @@ export default function Cart({ cart, setCart, open, onClose }: CartProps) {
                     }
                   />
                   <ListItemSecondaryAction>
-                    <IconButton
-                      onClick={() => decreaseQuantity(item.id)}
-                      edge="end"
-                      size="small"
-                    >
+                    <IconButton onClick={() => decreaseQuantity(item.id)} edge="end" size="small">
                       <RemoveIcon />
                     </IconButton>
                     <Typography
@@ -116,19 +101,10 @@ export default function Cart({ cart, setCart, open, onClose }: CartProps) {
                     >
                       {item.quantity}
                     </Typography>
-                    <IconButton
-                      onClick={() => increaseQuantity(item.id)}
-                      edge="end"
-                      size="small"
-                    >
+                    <IconButton onClick={() => increaseQuantity(item.id)} edge="end" size="small">
                       <AddIcon />
                     </IconButton>
-                    <IconButton
-                      onClick={() => removeItem(item.id)}
-                      edge="end"
-                      sx={{ ml: 2 }}
-                      size="small"
-                    >
+                    <IconButton onClick={() => removeItem(item.id)} edge="end" sx={{ ml: 2 }} size="small">
                       <DeleteIcon color="error" />
                     </IconButton>
                   </ListItemSecondaryAction>
