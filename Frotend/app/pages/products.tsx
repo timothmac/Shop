@@ -14,7 +14,7 @@ const products = [
   { id: 41, name: "Перфоратор Bosch", price: "4500 грн", image: "https://teslabatteries.kiev.ua/wp-content/uploads/2021/02/sravnit1-1080x675.jpg" },
 ];
 
-export default function Page() {
+const ProductsPage: React.FC = () => {
   const router = useRouter();
 
   const handleProductClick = (id) => {
@@ -45,4 +45,6 @@ export default function Page() {
       </Grid>
     </Container>
   );
-}
+};
+
+export default ProductsPage;
