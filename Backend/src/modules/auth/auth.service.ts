@@ -14,7 +14,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(createAuthDto: CreateAuthDto): Promise<{ accessToken: string }> {
+  async register(createAuthDto: CreateAuthDto): Promise<{ user:any , accessToken: string }> {
     const { email, password, role, fullName, address, phoneNumber } = createAuthDto;
   
     const existingUser = await this.usersRepository.findOne({ where: { email } });
@@ -35,13 +35,12 @@ export class AuthService {
     await this.usersRepository.save(user);
   
     const payload = { id: user.id, email: user.email, role: user.role };
-    console.log("\n ✅ Generated JWT payload:", payload); 
   
     const accessToken = this.jwtService.sign(payload);
-    return { accessToken };
+    return { user, accessToken };
   }
 
-  async login(email: string, password: string): Promise<{ accessToken: string }> {
+  async login(email: string, password: string): Promise<{ user:any ,accessToken: string }> {
     const user = await this.usersRepository.findOne({ where: { email } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -53,6 +52,6 @@ export class AuthService {
     console.log("\n role is " + payload.role)
     const accessToken = this.jwtService.sign(payload);
 
-    return { accessToken };
+    return { user, accessToken };
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   AppBar,
@@ -14,14 +14,20 @@ import {
   Menu,
   MenuItem,
   Paper,
+  Dialog,
+  CircularProgress,
 } from "@mui/material";
+import { styled } from "@mui/material/styles";
+
 import MenuIcon from "@mui/icons-material/Menu";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import PhoneIcon from "@mui/icons-material/Phone";
-import { styled } from "@mui/material/styles";
+
 import Cart from "./Cart";
-import { useCart } from "../contetx/cartContext"; // проверьте путь
+import LoginForm from "./LoginForm";
+import { useCart } from "../contetx/cartContext";
+import { fetchCategories, Category } from "../api/categoryAPI";
 
 const SearchWrapper = styled(Paper)(({ theme }) => ({
   display: "flex",
@@ -40,17 +46,42 @@ const SearchInput = styled(InputBase)(({ theme }) => ({
   flex: 1,
 }));
 
-const Header = () => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
-  const [cartOpen, setCartOpen] = useState(false);
+const Header: React.FC = () => {
+  // Открытие/закрытие меню каталога
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menuOpen = Boolean(anchorEl);
 
-  // Получаем глобальную корзину из контекста
+  // Открытие/закрытие корзины
+  const [cartOpen, setCartOpen] = useState(false);
+  // Открытие/закрытие диалога авторизации
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  // Данные корзины из контекста
   const { cart } = useCart();
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
+  // Категории товаров
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Загрузка категорий при монтировании компонента
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error("Ошибка загрузки категорий:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCategories();
+  }, []);
+
   return (
     <>
+      {/* Верхняя панель с информацией */}
       <AppBar position="static" sx={{ backgroundColor: "#fff", color: "#000" }}>
         <Toolbar
           sx={{
@@ -60,6 +91,7 @@ const Header = () => {
             borderBottom: "1px solid #e0e0e0",
           }}
         >
+          {/* Ссылки слева */}
           <Box sx={{ display: "flex", gap: 2, fontSize: "0.9rem" }}>
             <Typography variant="body2" component="span">
               <Link href="/about" style={{ textDecoration: "none", color: "black" }}>
@@ -78,6 +110,7 @@ const Header = () => {
             </Typography>
           </Box>
 
+          {/* Контактная информация и кнопки справа */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <PhoneIcon fontSize="small" />
@@ -91,6 +124,7 @@ const Header = () => {
                 "&:hover": { backgroundColor: "#FFB300" },
               }}
               startIcon={<AccountCircleIcon />}
+              onClick={() => setLoginOpen(true)}
             >
               Особистий кабінет
             </Button>
@@ -102,6 +136,8 @@ const Header = () => {
           </Box>
         </Toolbar>
       </AppBar>
+
+      {/* Вторая панель с логотипом, меню каталога и поиском */}
       <Toolbar
         sx={{
           minHeight: "60px",
@@ -111,11 +147,14 @@ const Header = () => {
           alignItems: "center",
         }}
       >
+        {/* Логотип */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mr: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: "bold" }}>
             STROYZONE
           </Typography>
         </Box>
+
+        {/* Кнопка и меню каталога */}
         <Box>
           <Button
             startIcon={<MenuIcon />}
@@ -124,14 +163,25 @@ const Header = () => {
           >
             КАТАЛОГ ТОВАРІВ
           </Button>
-          <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
-            <MenuItem onClick={() => setAnchorEl(null)}>Будматеріали</MenuItem>
-            <MenuItem onClick={() => setAnchorEl(null)}>Інструменти</MenuItem>
-            <MenuItem onClick={() => setAnchorEl(null)}>Сантехніка</MenuItem>
-            <MenuItem onClick={() => setAnchorEl(null)}>Електрика</MenuItem>
+          <Menu anchorEl={anchorEl} open={menuOpen} onClose={() => setAnchorEl(null)}>
+            {loading ? (
+              <MenuItem disabled>
+                <CircularProgress size={24} />
+              </MenuItem>
+            ) : (
+              categories.map((category) => (
+                <MenuItem key={category.id} onClick={() => setAnchorEl(null)}>
+                  {category.name}
+                </MenuItem>
+              ))
+            )}
           </Menu>
         </Box>
+
+        {/* Пробел для выравнивания по сторонам */}
         <Box sx={{ flexGrow: 1 }} />
+
+        {/* Поисковая строка */}
         <SearchWrapper>
           <SearchInput placeholder="Що шукаєте?" />
         </SearchWrapper>
@@ -147,7 +197,17 @@ const Header = () => {
           Знайти
         </Button>
       </Toolbar>
-      {/* Вызов компонента корзины */}
+
+      {/* Диалоговое окно авторизации */}
+      <Dialog
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+  
+      >
+        <LoginForm onClose={() => setLoginOpen(false)} />
+      </Dialog>
+
+      {/* Компонент корзины */}
       <Cart open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );

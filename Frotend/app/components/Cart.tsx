@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   Box,
   Typography,
@@ -8,22 +9,32 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   Divider,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from "@mui/material";
+
+import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
+
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useCart } from "../contetx/cartContext"; // проверьте путь
 
-export default function Cart({ open, onClose }: { open: boolean; onClose: () => void }) {
+
+import { useCart } from "../contetx/cartContext";
+
+type CartProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
+export default function Cart({ open, onClose }: CartProps) {
   // Получаем cart и setCart из глобального контекста
   const { cart, setCart } = useCart();
 
+  // Увеличить количество
   const increaseQuantity = (id: number) => {
     setCart(
       cart.map((item) =>
@@ -32,6 +43,7 @@ export default function Cart({ open, onClose }: { open: boolean; onClose: () => 
     );
   };
 
+  // Уменьшить количество
   const decreaseQuantity = (id: number) => {
     setCart(
       cart.map((item) =>
@@ -42,12 +54,18 @@ export default function Cart({ open, onClose }: { open: boolean; onClose: () => 
     );
   };
 
+  // Удалить товар из корзины
   const removeItem = (id: number) => {
     setCart(cart.filter((item) => item.id !== id));
   };
 
-  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Подсчитываем итоговую сумму
+  const totalPrice = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
+  // Если товаров много, ограничим высоту списка
   const listStyle = {
     maxHeight: cart.length > 3 ? 300 : "auto",
     overflowY: cart.length > 3 ? "auto" : "visible",
@@ -59,6 +77,7 @@ export default function Cart({ open, onClose }: { open: boolean; onClose: () => 
       <DialogTitle sx={{ fontWeight: "bold", backgroundColor: "#f5f5f5" }}>
         🛒 Кошик
       </DialogTitle>
+
       <DialogContent dividers>
         {cart.length === 0 ? (
           <Typography variant="body1" color="textSecondary" align="center">
@@ -86,10 +105,16 @@ export default function Cart({ open, onClose }: { open: boolean; onClose: () => 
                       </>
                     }
                   />
+
                   <ListItemSecondaryAction>
-                    <IconButton onClick={() => decreaseQuantity(item.id)} edge="end" size="small">
+                    <IconButton
+                      onClick={() => decreaseQuantity(item.id)}
+                      edge="end"
+                      size="small"
+                    >
                       <RemoveIcon />
                     </IconButton>
+
                     <Typography
                       variant="body1"
                       sx={{
@@ -101,10 +126,21 @@ export default function Cart({ open, onClose }: { open: boolean; onClose: () => 
                     >
                       {item.quantity}
                     </Typography>
-                    <IconButton onClick={() => increaseQuantity(item.id)} edge="end" size="small">
+
+                    <IconButton
+                      onClick={() => increaseQuantity(item.id)}
+                      edge="end"
+                      size="small"
+                    >
                       <AddIcon />
                     </IconButton>
-                    <IconButton onClick={() => removeItem(item.id)} edge="end" sx={{ ml: 2 }} size="small">
+
+                    <IconButton
+                      onClick={() => removeItem(item.id)}
+                      edge="end"
+                      sx={{ ml: 2 }}
+                      size="small"
+                    >
                       <DeleteIcon color="error" />
                     </IconButton>
                   </ListItemSecondaryAction>
@@ -115,6 +151,7 @@ export default function Cart({ open, onClose }: { open: boolean; onClose: () => 
           </List>
         )}
       </DialogContent>
+
       <DialogActions sx={{ justifyContent: "space-between", p: 2 }}>
         <Typography variant="h6" fontWeight="bold">
           Загальна сума: {totalPrice.toFixed(2)} ₴
