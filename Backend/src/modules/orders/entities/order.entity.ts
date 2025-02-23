@@ -3,6 +3,13 @@ import { User } from '../../users/entities/user.entity';
 import { OrderItem } from './order-items.entity';
 import { Payment } from '../../payments/entities/payment.entity';
 
+export enum OrderStatus {
+  PENDING = 'pending',
+  SHIPPED = 'shipped',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+}
+
 @Entity()
 export class Order {
   @PrimaryGeneratedColumn('uuid')
@@ -17,8 +24,12 @@ export class Order {
   @Column('decimal')
   totalPrice: number;
 
-  @Column({ default: 'pending' })
-  status: string;
+  @Column({
+    type: 'enum',
+    enum: OrderStatus,
+    default: OrderStatus.PENDING,
+  })
+  status: OrderStatus;
 
   @OneToMany(() => Payment, (payment) => payment.order)
   payments: Payment[];
