@@ -14,11 +14,11 @@ import { User } from './entities/user.entity';
     UsersService,
     // {
     //   provide: APP_GUARD,
-    //   useClass: JwtAuthGuard, // Глобальная JWT-аутентификация
+    //   useClass: JwtAuthGuard, 
     // },
     // {
     //   provide: APP_GUARD,
-    //   useClass: RolesGuard, // Глобальная проверка ролей
+    //   useClass: RolesGuard, 
     // },
   ],
 })

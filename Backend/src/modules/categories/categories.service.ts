@@ -20,7 +20,7 @@ export class CategoriesService {
 
 
   async findAll(): Promise<Category[]> {
-    return this.categoriesRepository.find({ relations: ['products'] }); // загружаем продукты в категории
+    return this.categoriesRepository.find({ relations: ['products'] }); 
   }
 
 
