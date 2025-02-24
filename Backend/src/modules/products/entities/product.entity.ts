@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'ty
 import { Category } from '../../categories/entities/category.entity';
 import { Review } from '../../reviews/entities/review.entity';
 import { Cart } from '../../cart/entities/cart.entity';
-import { OrderItem  } from '../../orders/entities/order-items.entity';
+import { OrderItem } from '../../orders/entities/order-items.entity';
 
 @Entity()
 export class Product {
@@ -20,6 +20,9 @@ export class Product {
 
   @Column('int', { default: 0 })
   stock: number;
+
+  @Column({ nullable: true }) // Позволяет хранить URL изображения, можно сделать обязательным
+  image: string;
 
   @ManyToOne(() => Category, (category) => category.products)
   category: Category;

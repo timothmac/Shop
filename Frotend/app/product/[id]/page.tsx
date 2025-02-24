@@ -13,52 +13,82 @@ import {
   Tabs,
   Tab,
   Divider,
+  CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { Avatar } from "@mui/material";
+import PersonIcon from "@mui/icons-material/Person";
 import RemoveIcon from "@mui/icons-material/Remove";
 import { useCart } from "../../contetx/cartContext"; // Проверьте путь!
 
-// Симуляция базы данных товаров
-const products = [
-  {
-    id: 1,
-    name: "АКВАПАНЕЛЬ – ЦЕМ. ПЛИТА ДЛЯ ВНУТРЕННИХ РАБОТ",
-    price: 452.17, // цена хранится как число для удобства вычислений
-    article: "70184625194",
-    unit: "м²",
-    image: "https://stroyzone.com/upload/iblock/950/70184625194.webp",
-    description:
-      "Возведение облицовок, перегородок або постройка стен осуществляется с помощью качественной цементной плиты Аквапанель...",
-  },
-  {
-    id: 2,
-    name: "ggfgf",
-    price: 45, // цена хранится как число для удобства вычислений
-    article: "70184625194",
-    unit: "м²",
-    image: "https://stroyzone.com/upload/iblock/950/70184625194.webp",
-    description:
-      "Возведение облицовок, перегородок або постройка стен осуществляется с помощью качественной цементной плиты Аквапанель...",
-  },
-];
+// Интерфейс продукта (с отзывами)
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  article: string;
+  unit: string;
+  image: string;
+  description: string;
+  reviews: Review[];
+}
+
+// Интерфейс отзывов
+interface Review {
+  id: string;
+  rating: number;
+  content: string;
+  user: {
+    fullName: string;
+  };
+}
 
 export default function ProductPage() {
   const { id } = useParams();
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [tab, setTab] = useState(0);
-  const { addToCart } = useCart(); // Получаем функцию добавления из контекста
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { addToCart } = useCart(); // Получаем функцию добавления в корзину
 
+  // Загрузка данных с бэкенда
   useEffect(() => {
-    const foundProduct = products.find((p) => p.id === Number(id));
-    setProduct(foundProduct);
+    async function fetchProduct() {
+      try {
+        const response = await fetch(`http://localhost:3000/products/${id}`);
+        if (!response.ok) {
+          throw new Error("Товар не знайдено");
+        }
+        const data: Product = await response.json();
+        setProduct(data);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (id) {
+      fetchProduct();
+    }
   }, [id]);
 
-  if (!product) {
+  // Если загрузка данных
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4, textAlign: "center" }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  // Если возникла ошибка
+  if (error || !product) {
     return (
       <Container maxWidth="md" sx={{ mt: 4, mb: 4, textAlign: "center" }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
-          ❌ Товар не знайдено
+          ❌ {error || "Товар не знайдено"}
         </Typography>
         <Typography variant="body1" color="textSecondary">
           Можливо, ви перейшли за невірним посиланням або товар видалено.
@@ -67,9 +97,9 @@ export default function ProductPage() {
     );
   }
 
+  // Добавить товар в корзину
   const handleBuy = () => {
     addToCart(product, quantity);
-    // По желанию, можно добавить уведомление о том, что товар добавлен в корзину.
   };
 
   return (
@@ -133,7 +163,7 @@ export default function ProductPage() {
         <Tabs value={tab} onChange={(event, newValue) => setTab(newValue)}>
           <Tab label="ОПИСАННЯ" />
           <Tab label="ХАРАКТЕРИСТИКИ" />
-          <Tab label="ВІДГУКИ (0)" />
+          <Tab label={`ВІДГУКИ (${product.reviews.length})`} />
         </Tabs>
         <Divider sx={{ mb: 2 }} />
 
@@ -148,9 +178,36 @@ export default function ProductPage() {
           </Typography>
         )}
         {tab === 2 && (
-          <Typography variant="body1" color="textSecondary">
-            Поки відгуків немає. Будьте першим, хто залишить відгук!
-          </Typography>
+          <Box>
+          {product.reviews.length > 0 ? (
+            product.reviews.map((review) => (
+              <Box key={review.id} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                {/* Аватар пользователя */}
+                <Avatar sx={{ bgcolor: "gray", mr: 2 }}>
+                  <PersonIcon />
+                </Avatar>
+        
+                <Box>
+                  {/* Имя пользователя */}
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {review.user.fullName}
+                  </Typography>
+                  {/* Рейтинг */}
+                  <Typography variant="body2" color="textSecondary">
+                    Оцінка: {review.rating} ⭐
+                  </Typography>
+                  {/* Текст отзыва */}
+                  <Typography variant="body1">{review.content}</Typography>
+                  <Divider sx={{ mt: 1 }} />
+                </Box>
+              </Box>
+            ))
+          ) : (
+            <Typography variant="body1" color="textSecondary">
+              Поки відгуків немає. Будьте першим, хто залишить відгук!
+            </Typography>
+          )}
+        </Box>
         )}
       </Box>
     </Container>

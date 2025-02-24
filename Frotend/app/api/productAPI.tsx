@@ -1,11 +1,14 @@
 export interface Product {
-    id: number;
-    name: string;
-    price: string;  // или number, если на бэкенде число
-    image: string;
+    id: number;          
+    name: string;        
+    description: string; 
+    price: number;       
+    stock: number;       
+    categoryId: string;  
+    image: string;       
   }
   
-  // ===== Функция для загрузки продуктов с бэкенда =====
+
   export async function fetchProducts(): Promise<Product[]> {
     const response = await fetch("http://localhost:3000/products");
     if (!response.ok) {

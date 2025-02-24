@@ -24,15 +24,16 @@ export class ProductsController {
   }
 
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.productsService.findOne(id);
-  // }
+ 
   @Get('search')
   search(@Query('name') name?: string, @Query('categoryId') categoryId?: string) {
     return this.productsService.search(name, categoryId);
   }
-
+  
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.productsService.findOne(id);
+  }
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')

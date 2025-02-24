@@ -22,14 +22,50 @@ export class ProductsService {
   }
 
   
+  // async findOne(id: string): Promise<Product> {
+  //   const product = await this.productsRepository.findOne({
+  //     where: { id },
+  //     // Подгружаем:
+  //     // - отзывы (reviews)
+  //     // - пользователя (user), связанного с отзывом
+  //     relations: ['reviews', 'reviews.user'],
+  //   });
+  
+  //   if (!product) {
+  //     throw new NotFoundException(`Product with id ${id} not found`);
+  //   }
+  
+  //   return product;
+  // }
   async findOne(id: string): Promise<Product> {
-    const product = await this.productsRepository.findOne({ where: { id } });
+    const product = await this.productsRepository.findOne({
+      where: { id },
+      relations: ['reviews', 'reviews.user'], // Загружаем только user.name
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        stock: true,
+        image: true,
+        reviews: {
+          id: true,
+          rating: true,
+          content: true,
+          user: {
+            fullName: true, 
+          },
+        },
+      },
+    });
+  
     if (!product) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
+  
     return product;
   }
-
+  
 
   async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
     const product = await this.findOne(id);
