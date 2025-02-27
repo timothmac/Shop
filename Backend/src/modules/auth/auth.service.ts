@@ -47,7 +47,7 @@ export class AuthService {
       throw new UnauthorizedException('Wrong email or password');
     }
 
-    // Создаем JWT-токен
+
     const payload = { id: user.id, email: user.email, role: user.role };
     console.log("\n role is " + payload.role)
     const accessToken = this.jwtService.sign(payload);

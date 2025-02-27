@@ -18,7 +18,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-
 import MenuIcon from "@mui/icons-material/Menu";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
@@ -28,6 +27,8 @@ import Cart from "./Cart";
 import LoginForm from "./LoginForm";
 import { useCart } from "../contetx/cartContext";
 import { fetchCategories, Category } from "../api/categoryAPI";
+// Використовуємо useRouter для переходів
+import { useRouter } from "next/navigation";
 
 const SearchWrapper = styled(Paper)(({ theme }) => ({
   display: "flex",
@@ -47,31 +48,34 @@ const SearchInput = styled(InputBase)(({ theme }) => ({
 }));
 
 const Header: React.FC = () => {
-  // Открытие/закрытие меню каталога
+  const router = useRouter();
+
+  // Меню категорій
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
-
-  // Открытие/закрытие корзины
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Відкриття/закриття кошика та діалогу логіна
   const [cartOpen, setCartOpen] = useState(false);
-  // Открытие/закрытие диалога авторизации
   const [loginOpen, setLoginOpen] = useState(false);
 
-  // Данные корзины из контекста
+  // Кошик з контексту
   const { cart } = useCart();
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-  // Категории товаров
+  // Список категорій
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Загрузка категорий при монтировании компонента
+  // Строка пошуку
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     async function loadCategories() {
       try {
         const data = await fetchCategories();
         setCategories(data);
       } catch (error) {
-        console.error("Ошибка загрузки категорий:", error);
+        console.error("Помилка завантаження категорій:", error);
       } finally {
         setLoading(false);
       }
@@ -79,9 +83,36 @@ const Header: React.FC = () => {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    setIsLoggedIn(!!user);
+  }, []);
+
+  // Перехід до товарів конкретної категорії
+  const handleCategorySelect = (categoryId: string) => {
+    setAnchorEl(null);
+    router.push(`/category/${categoryId}`);
+  };
+
+  // Обробка пошуку за назвою
+  const handleSearch = () => {
+    if (searchTerm.trim()) {
+      router.push(`/search?name=${searchTerm}`);
+    }
+  };
+
+  // Обробка кліку на кнопку особистого кабінету
+  const handleAccountClick = () => {
+    if (isLoggedIn) {
+      router.push("/userDashboard");
+    } else {
+      setLoginOpen(true);
+    }
+  };
+
   return (
     <>
-      {/* Верхняя панель с информацией */}
+      {/* Верхня панель (контакти, особистий кабінет та кошик) */}
       <AppBar position="static" sx={{ backgroundColor: "#fff", color: "#000" }}>
         <Toolbar
           sx={{
@@ -91,7 +122,6 @@ const Header: React.FC = () => {
             borderBottom: "1px solid #e0e0e0",
           }}
         >
-          {/* Ссылки слева */}
           <Box sx={{ display: "flex", gap: 2, fontSize: "0.9rem" }}>
             <Typography variant="body2" component="span">
               <Link href="/about" style={{ textDecoration: "none", color: "black" }}>
@@ -110,7 +140,6 @@ const Header: React.FC = () => {
             </Typography>
           </Box>
 
-          {/* Контактная информация и кнопки справа */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <PhoneIcon fontSize="small" />
@@ -124,9 +153,9 @@ const Header: React.FC = () => {
                 "&:hover": { backgroundColor: "#FFB300" },
               }}
               startIcon={<AccountCircleIcon />}
-              onClick={() => setLoginOpen(true)}
+              onClick={handleAccountClick}
             >
-              Особистий кабінет
+              {isLoggedIn ? "Особистий кабінет" : "Увійти в кабінет"}
             </Button>
             <IconButton color="inherit" onClick={() => setCartOpen(true)}>
               <Badge badgeContent={totalItems} color="primary">
@@ -137,7 +166,7 @@ const Header: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Вторая панель с логотипом, меню каталога и поиском */}
+      {/* Друга панель (логотип, меню каталогу та пошук) */}
       <Toolbar
         sx={{
           minHeight: "60px",
@@ -147,14 +176,13 @@ const Header: React.FC = () => {
           alignItems: "center",
         }}
       >
-        {/* Логотип */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mr: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: "bold" }}>
             STROYZONE
           </Typography>
         </Box>
 
-        {/* Кнопка и меню каталога */}
+        {/* Кнопка та меню каталогу */}
         <Box>
           <Button
             startIcon={<MenuIcon />}
@@ -170,7 +198,7 @@ const Header: React.FC = () => {
               </MenuItem>
             ) : (
               categories.map((category) => (
-                <MenuItem key={category.id} onClick={() => setAnchorEl(null)}>
+                <MenuItem key={category.id} onClick={() => handleCategorySelect(category.id)}>
                   {category.name}
                 </MenuItem>
               ))
@@ -178,12 +206,16 @@ const Header: React.FC = () => {
           </Menu>
         </Box>
 
-        {/* Пробел для выравнивания по сторонам */}
+        {/* "Гнучкий" відступ для вирівнювання елементів праворуч */}
         <Box sx={{ flexGrow: 1 }} />
 
-        {/* Поисковая строка */}
+        {/* Пошукова стрічка */}
         <SearchWrapper>
-          <SearchInput placeholder="Що шукаєте?" />
+          <SearchInput
+            placeholder="Що шукаєте?"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </SearchWrapper>
         <Button
           variant="contained"
@@ -193,21 +225,18 @@ const Header: React.FC = () => {
             color: "#000",
             "&:hover": { backgroundColor: "#FFB300" },
           }}
+          onClick={handleSearch}
         >
           Знайти
         </Button>
       </Toolbar>
 
-      {/* Диалоговое окно авторизации */}
-      <Dialog
-        open={loginOpen}
-        onClose={() => setLoginOpen(false)}
-  
-      >
+      {/* Діалогове вікно авторизації */}
+      <Dialog open={loginOpen} onClose={() => setLoginOpen(false)}>
         <LoginForm onClose={() => setLoginOpen(false)} />
       </Dialog>
 
-      {/* Компонент корзины */}
+      {/* Компонент кошика */}
       <Cart open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );

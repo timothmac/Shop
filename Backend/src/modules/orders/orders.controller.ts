@@ -16,8 +16,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/guards/roles.decorator';
 
-@Controller('orders')
 @UseGuards(JwtAuthGuard) 
+@Controller('orders')
+
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -28,12 +29,12 @@ export class OrdersController {
 
   
   @Get()
+ 
   @UseGuards(RolesGuard)
   @Roles('manager')
   findAll() {
     return this.ordersService.findAll();
   }
-
 
   @Get('my-orders')
   findMyOrders(@Request() req) {

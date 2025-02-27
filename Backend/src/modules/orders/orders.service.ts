@@ -23,44 +23,69 @@ export class OrdersService {
 
 
   async create(createOrderDto: CreateOrderDto, userId: string): Promise<Order> {
-    const { orderItems, totalPrice } = createOrderDto;
-
-
-    const products = await this.productsRepository.findByIds(
-      orderItems.map((item) => item.productId),
-    );
-
+    // Извлекаем все необходимые поля из запроса
+    const {
+      fullName,
+      email,
+      phone,
+      city,
+      address,
+      comment,
+      deliveryMethod,
+      paymentMethod,
+      orderItems,
+      totalPrice,
+    } = createOrderDto;
+    console.log(createOrderDto);
+  
+    // Преобразуем totalPrice в число, если необходимо
+    const parsedTotalPrice = typeof totalPrice === 'string' ? parseFloat(totalPrice) : totalPrice;
+  
+    // Получаем id товаров из поля orderItems (здесь используем item.id)
+    const productIds = orderItems.map((item) => item.id);
+    const products = await this.productsRepository.findByIds(productIds);
+  
     if (products.length !== orderItems.length) {
       throw new NotFoundException('Some products were not found');
     }
-
-
+  
+    // Создаем заказ с дополнительными полями
     const order = this.ordersRepository.create({
       user: { id: userId },
-      totalPrice,
+      totalPrice: parsedTotalPrice,
       status: OrderStatus.PENDING,
+      city,
+      address,
+      paymentMethod,
+      deliveryMethod,
+      fullName,
+      email,
+      phone,
+      comment,
     });
     await this.ordersRepository.save(order);
-
+  
     const savedOrderItems: OrderItem[] = [];
     for (const item of orderItems) {
-      const product = products.find((p) => p.id === item.productId);
+      const product = products.find((p) => p.id === item.id);
       if (!product) continue;
-
+  
+      // Преобразуем цену товара в число
+      const parsedPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
       const orderItem = this.orderItemsRepository.create({
         order,
         product,
         quantity: item.quantity,
-        price: item.price,
+        price: parsedPrice,
       });
-
+  
       savedOrderItems.push(await this.orderItemsRepository.save(orderItem));
     }
-
+  
     order.orderItems = savedOrderItems;
     return order;
   }
-
+  
 
   async findAll(): Promise<Order[]> {
     return this.ordersRepository.find({
@@ -73,6 +98,7 @@ export class OrdersService {
     return this.ordersRepository.find({
       where: { user: { id: userId } },
       relations: ['orderItems', 'orderItems.product'],
+      order: { createdAt: 'DESC' }, // Сортировка по дате создания, чтобы новые заказы были первыми
     });
   }
 

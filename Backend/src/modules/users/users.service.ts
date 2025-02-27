@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -26,7 +28,6 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-
   async findOne(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
@@ -35,9 +36,15 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<{ user: User; accessToken: string }> {
     await this.usersRepository.update(id, updateUserDto);
-    return this.findOne(id);
+    const user = await this.findOne(id);
+    console.log("User data:", user);
+    const payload = { id: user.id, email: user.email, role: user.role };
+    console.log("\n role is " + payload.role);
+    const accessToken = this.jwtService.sign(payload);
+    console.log(accessToken)
+    return {  accessToken,user };
   }
 
   async remove(id: string): Promise<void> {

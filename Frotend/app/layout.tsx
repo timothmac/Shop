@@ -4,7 +4,7 @@ import { CartProvider } from "./contetx/cartContext";
 import Header from "./components/Header";
 
 export const metadata = {
-  title: "Название проекта",
+  title: "STROYZONE",
   description: "Описание проекта",
 };
 

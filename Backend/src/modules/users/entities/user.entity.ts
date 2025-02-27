@@ -16,7 +16,8 @@ export class User {
 
   @Column({ default: 'client' })
   role: string;
-
+  @Column({ default: 'Київ' })
+  city: string;
   @Column({ nullable: true })
   fullName?: string;
 

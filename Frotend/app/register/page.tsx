@@ -60,10 +60,10 @@ export default function Page() {
           // Удаляем confirmPassword перед отправкой
           const { confirmPassword, ...payload } = values;
           const data = await registerUser(payload);
-          
+          console.log(data)
           // Если сервер вернул токен, сохраняем его
-          if (data.token) {
-            localStorage.setItem("token", data.token);
+          if (data.accessToken) {
+            localStorage.setItem("user", JSON.stringify(data));
           }
 
           alert("Реєстрація успішна!");

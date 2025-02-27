@@ -15,13 +15,10 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-
 import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
-
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import DeleteIcon from "@mui/icons-material/Delete";
-
 import { useRouter } from "next/navigation";
 import { useCart } from "../contetx/cartContext";
 
@@ -31,10 +28,9 @@ type CartProps = {
 };
 
 export default function Cart({ open, onClose }: CartProps) {
+  const router = useRouter();
   const { cart, setCart } = useCart();
-  const router = useRouter(); // Використовуємо useRouter для навігації
 
-  // Збільшити кількість
   const increaseQuantity = (id: number) => {
     setCart(
       cart.map((item) =>
@@ -43,63 +39,46 @@ export default function Cart({ open, onClose }: CartProps) {
     );
   };
 
-  // Зменшити кількість
   const decreaseQuantity = (id: number) => {
     setCart(
       cart.map((item) =>
         item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
+          ? { ...item, quantity: item.quantity - 1 } : item
       )
     );
   };
 
-  // Видалити товар із кошика
   const removeItem = (id: number) => {
     setCart(cart.filter((item) => item.id !== id));
   };
 
-  // Підраховуємо загальну суму
-  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalPrice = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
-  // Стилі для списку, якщо товарів > 3
   const listStyle = {
     maxHeight: cart.length > 3 ? 300 : "auto",
     overflowY: cart.length > 3 ? "auto" : "visible",
     paddingRight: cart.length > 3 ? "8px" : 0,
   };
 
-  // Обробник оформлення замовлення
-  const handleOrder = () => {
-    // Формуємо об'єкт з масивом товарів та загальною сумою
-    const orderData = {
-      items: cart,
-      totalPrice: totalPrice.toFixed(2),
-    };
-
-    // Збережемо об'єкт замовлення в Local Storage
-    localStorage.setItem("order", JSON.stringify(orderData));
-
-    // Очистити кошик
-    setCart([]);
-
-    // Закрити модальне вікно
-    onClose();
-
-    // Перехід на сторінку /order
-    router.push("/order");
-  };
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      {/* Шапка модального окна */}
       <DialogTitle sx={{ fontWeight: "bold", backgroundColor: "#f5f5f5" }}>
-        🛒 Кошик
+        {/* КРОК 1 */}
+        <Typography variant="subtitle2" color="textSecondary" component="span">
+          КРОК 1:
+        </Typography>{" "}
+        Ваш кошик
       </DialogTitle>
 
+      {/* Содержимое корзины */}
       <DialogContent dividers>
         {cart.length === 0 ? (
           <Typography variant="body1" color="textSecondary" align="center">
-            Кошик порожній.
+            Кошик порожній
           </Typography>
         ) : (
           <List sx={listStyle}>
@@ -123,7 +102,6 @@ export default function Cart({ open, onClose }: CartProps) {
                       </>
                     }
                   />
-
                   <ListItemSecondaryAction>
                     <IconButton
                       onClick={() => decreaseQuantity(item.id)}
@@ -132,7 +110,6 @@ export default function Cart({ open, onClose }: CartProps) {
                     >
                       <RemoveIcon />
                     </IconButton>
-
                     <Typography
                       variant="body1"
                       sx={{
@@ -144,7 +121,6 @@ export default function Cart({ open, onClose }: CartProps) {
                     >
                       {item.quantity}
                     </Typography>
-
                     <IconButton
                       onClick={() => increaseQuantity(item.id)}
                       edge="end"
@@ -152,7 +128,6 @@ export default function Cart({ open, onClose }: CartProps) {
                     >
                       <AddIcon />
                     </IconButton>
-
                     <IconButton
                       onClick={() => removeItem(item.id)}
                       edge="end"
@@ -170,19 +145,24 @@ export default function Cart({ open, onClose }: CartProps) {
         )}
       </DialogContent>
 
+      {/* Итог и кнопки */}
       <DialogActions sx={{ justifyContent: "space-between", p: 2 }}>
         <Typography variant="h6" fontWeight="bold">
           Загальна сума: {totalPrice.toFixed(2)} ₴
         </Typography>
         <Box>
+          {/* Кнопка "Продовжити" → переход на страницу оформления */}
           <Button
             variant="contained"
             color="primary"
             sx={{ mr: 1, textTransform: "none", fontWeight: "bold" }}
-            onClick={handleOrder}
             disabled={cart.length === 0}
+            onClick={() => {
+              onClose();
+              router.push("/checkout"); // или любой ваш роут
+            }}
           >
-            Оформити замовлення
+            Продовжити
           </Button>
           <Button onClick={onClose} color="secondary" variant="outlined">
             Закрити

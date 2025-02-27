@@ -11,24 +11,41 @@ import {
   Typography,
   Link,
 } from "@mui/material";
+import { useState } from "react";
+import { loginUser } from "../api/loginAPI"; // Импортируем API-функцию для входа
 
 const validationSchema = Yup.object({
   email: Yup.string()
     .email("Невірний формат email")
     .required("Обов'язкове поле"),
   password: Yup.string()
-    .min(6, "Мінімум 6 символів")
     .required("Обов'язкове поле"),
 });
 
 export default function LoginForm({ onClose }: { onClose: () => void }) {
+  const [errorMessage, setErrorMessage] = useState("");
+
   return (
     <Formik
       initialValues={{ email: "", password: "", rememberMe: false }}
       validationSchema={validationSchema}
-      onSubmit={(values) => {
-        console.log("Форма входу відправлена", values);
-        onClose(); // Закрываем диалог после успешного сабмита
+      onSubmit={async (values, { setSubmitting }) => {
+        setErrorMessage(""); // Очистка предыдущей ошибки
+        try {
+          const response = await loginUser({
+            email: values.email,
+            password: values.password,
+          });
+
+          console.log("Успішний вхід:", response);
+          localStorage.setItem("user", JSON.stringify(response));
+          onClose(); 
+          window.location.reload();
+        } catch (error: any) {
+          setErrorMessage(error.message || "Помилка входу");
+        } finally {
+          setSubmitting(false);
+        }
       }}
     >
       {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => (
@@ -82,6 +99,12 @@ export default function LoginForm({ onClose }: { onClose: () => void }) {
               label="Запам'ятати мене"
             />
 
+            {errorMessage && (
+              <Typography color="error" variant="body2">
+                {errorMessage}
+              </Typography>
+            )}
+
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
               <Link href="/register" variant="body2" underline="hover">
                 Реєстрація
@@ -103,7 +126,7 @@ export default function LoginForm({ onClose }: { onClose: () => void }) {
               disabled={isSubmitting}
               fullWidth
             >
-              Увійти
+              {isSubmitting ? "Вхід..." : "Увійти"}
             </Button>
           </Box>
         </Form>
