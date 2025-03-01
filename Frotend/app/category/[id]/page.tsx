@@ -14,10 +14,12 @@ import {
 } from "@mui/material";
 import { fetchProductsByCategory, Product } from "../../api/searchAPI";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 export default function CategoryPage() {
-  const params = useParams();         // Достаем [id] из URL
+  const params = useParams();
   const router = useRouter();
-  const categoryId = params.id;       // Идентификатор категории
+  const categoryId = params.id; // Получаем id категории из URL
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +61,17 @@ export default function CategoryPage() {
               <CardMedia
                 component="img"
                 height="180"
-                image={product.image}
+                image={
+                  product.image
+                    ? product.image.startsWith("http")
+                      ? product.image
+                      : `${API_URL}${product.image}`
+                    : "/placeholder.png"
+                }
                 alt={product.name}
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder.png";
+                }}
               />
               <CardContent>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
@@ -71,7 +82,7 @@ export default function CategoryPage() {
                   color="textSecondary"
                   fontWeight="bold"
                 >
-                  {product.price}
+                  {product.price} грн
                 </Typography>
                 <Button
                   variant="contained"

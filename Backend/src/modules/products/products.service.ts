@@ -13,34 +13,36 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const newProduct = this.productsRepository.create(createProductDto);
+    console.log(createProductDto);
+    const newProduct = this.productsRepository.create({
+      ...createProductDto,
+      category: { id: createProductDto.categoryId }, // явно устанавливаем связь
+    });
     return this.productsRepository.save(newProduct);
   }
+  
 
   async findAll(): Promise<Product[]> {
-    return this.productsRepository.find();
+    return this.productsRepository
+      .createQueryBuilder("product")
+      .leftJoinAndSelect("product.category", "category")
+      .select([
+        "product.id",
+        "product.name",
+        "product.description",
+        "product.price",
+        "product.stock",
+        "product.image",
+        "category.id",
+        "category.name"
+      ])
+      .getMany();
   }
 
-  
-  // async findOne(id: string): Promise<Product> {
-  //   const product = await this.productsRepository.findOne({
-  //     where: { id },
-  //     // Подгружаем:
-  //     // - отзывы (reviews)
-  //     // - пользователя (user), связанного с отзывом
-  //     relations: ['reviews', 'reviews.user'],
-  //   });
-  
-  //   if (!product) {
-  //     throw new NotFoundException(`Product with id ${id} not found`);
-  //   }
-  
-  //   return product;
-  // }
   async findOne(id: string): Promise<Product> {
     const product = await this.productsRepository.findOne({
       where: { id },
-      relations: ['reviews', 'reviews.user'], // Загружаем только user.name
+      relations: ['reviews', 'reviews.user'],
       select: {
         id: true,
         name: true,
@@ -52,20 +54,16 @@ export class ProductsService {
           id: true,
           rating: true,
           content: true,
-          user: {
-            fullName: true, 
-          },
+          user: { fullName: true },
         },
       },
     });
-  
+
     if (!product) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
-  
     return product;
   }
-  
 
   async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
     const product = await this.findOne(id);
@@ -73,25 +71,40 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-
   async remove(id: string): Promise<void> {
     const result = await this.productsRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
   }
+
   async search(name?: string, categoryId?: string): Promise<Product[]> {
-    const query = this.productsRepository.createQueryBuilder('product');
-   
+    const query = this.productsRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .select([
+        'product.id',
+        'product.name',
+        'product.description',
+        'product.price',
+        'product.stock',
+        'product.image',
+        'product.categoryId',
+        'category.id',
+        'category.name'
+      ]);
+  
     if (name) {
       query.andWhere('LOWER(product.name) LIKE LOWER(:name)', { name: `%${name}%` });
     }
-
-    if (categoryId) {
+  
+    // Применяем фильтр по категории только если categoryId передан и не равен "all"
+    if (categoryId && categoryId !== "all") {
       query.andWhere('product.categoryId = :categoryId', { categoryId });
     }
-
+  
     return query.getMany();
   }
-
+  
+  
 }

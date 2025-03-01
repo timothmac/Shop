@@ -15,6 +15,7 @@ export class CategoriesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   create(@Body() createCategoryDto: CreateCategoryDto) {
+    console.log(createCategoryDto)
     return this.categoriesService.create(createCategoryDto);
   }
 

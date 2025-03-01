@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -16,6 +16,12 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    // Перевірка, чи існує користувач із заданою поштою
+    const existingUser = await this.usersRepository.findOne({ where: { email: createUserDto.email } });
+    if (existingUser) {
+      throw new ConflictException('Email уже використовується');
+    }
+    
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const newUser = this.usersRepository.create({
       ...createUserDto,
@@ -31,20 +37,30 @@ export class UsersService {
   async findOne(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
-      throw new NotFoundException(`Пользователь с id ${id} не найден`);
+      throw new NotFoundException(`Користувача з id ${id} не знайдено`);
     }
     return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<{ user: User; accessToken: string }> {
+    // Якщо в updateUserDto передано email, перевіряємо, чи він не використовується іншим користувачем
+    if (updateUserDto.email) {
+      const existingUser = await this.usersRepository.findOne({ where: { email: updateUserDto.email } });
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException('Email уже використовується');
+      }
+    }
+
+    // Якщо оновлюється пароль, його необхідно захешувати
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+    
     await this.usersRepository.update(id, updateUserDto);
     const user = await this.findOne(id);
-    console.log("User data:", user);
     const payload = { id: user.id, email: user.email, role: user.role };
-    console.log("\n role is " + payload.role);
     const accessToken = this.jwtService.sign(payload);
-    console.log(accessToken)
-    return {  accessToken,user };
+    return { user, accessToken };
   }
 
   async remove(id: string): Promise<void> {

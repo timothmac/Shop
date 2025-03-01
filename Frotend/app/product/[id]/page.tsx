@@ -14,12 +14,16 @@ import {
   Tab,
   Divider,
   CircularProgress,
+  Avatar,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { Avatar } from "@mui/material";
-import PersonIcon from "@mui/icons-material/Person";
 import RemoveIcon from "@mui/icons-material/Remove";
+import PersonIcon from "@mui/icons-material/Person";
+import ImageNotSupportedIcon from "@mui/icons-material/ImageNotSupported";
 import { useCart } from "../../contetx/cartContext"; // Проверьте путь!
+
+// Определяем базовый URL для бэкенда
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 // Интерфейс продукта (с отзывами)
 interface Product {
@@ -42,6 +46,15 @@ interface Review {
     fullName: string;
   };
 }
+
+// Функция для формирования корректного URL изображения
+const getImageUrl = (image: string | undefined): string => {
+  if (!image) return "";
+  if (image.startsWith("http")) return image;
+  // Если image не начинается со слэша, добавляем его
+  const formattedPath = image.startsWith("/") ? image : `/${image}`;
+  return `${API_URL}${formattedPath}`;
+};
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -107,13 +120,28 @@ export default function ProductPage() {
       <Grid container spacing={4}>
         {/* Изображение товара */}
         <Grid item xs={12} md={6}>
-          <CardMedia
-            component="img"
-            height="300"
-            image={product.image}
-            alt={product.name}
-            sx={{ borderRadius: 2 }}
-          />
+          {product.image ? (
+            <CardMedia
+              component="img"
+              height="300"
+              image={getImageUrl(product.image)}
+              alt={product.name}
+              sx={{ borderRadius: 2 }}
+            />
+          ) : (
+            <Box
+              sx={{
+                height: 300,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#f0f0f0",
+                borderRadius: 2,
+              }}
+            >
+              <ImageNotSupportedIcon sx={{ fontSize: 60, color: "grey" }} />
+            </Box>
+          )}
         </Grid>
 
         {/* Информация о товаре */}
@@ -127,13 +155,20 @@ export default function ProductPage() {
           <Typography variant="body1" color="textSecondary">
             Единицы измерения: {product.unit}
           </Typography>
-          <Typography variant="h5" fontWeight="bold" color="primary" sx={{ mt: 2 }}>
+          <Typography
+            variant="h5"
+            fontWeight="bold"
+            color="primary"
+            sx={{ mt: 2 }}
+          >
             {product.price} ₴
           </Typography>
 
           {/* Выбор количества */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 2 }}>
-            <IconButton onClick={() => setQuantity(Math.max(1, quantity - 1))}>
+            <IconButton
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            >
               <RemoveIcon />
             </IconButton>
             <Typography variant="h6">{quantity}</Typography>
@@ -179,35 +214,37 @@ export default function ProductPage() {
         )}
         {tab === 2 && (
           <Box>
-          {product.reviews.length > 0 ? (
-            product.reviews.map((review) => (
-              <Box key={review.id} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                {/* Аватар пользователя */}
-                <Avatar sx={{ bgcolor: "gray", mr: 2 }}>
-                  <PersonIcon />
-                </Avatar>
-        
-                <Box>
-                  {/* Имя пользователя */}
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    {review.user.fullName}
-                  </Typography>
-                  {/* Рейтинг */}
-                  <Typography variant="body2" color="textSecondary">
-                    Оцінка: {review.rating} ⭐
-                  </Typography>
-                  {/* Текст отзыва */}
-                  <Typography variant="body1">{review.content}</Typography>
-                  <Divider sx={{ mt: 1 }} />
+            {product.reviews.length > 0 ? (
+              product.reviews.map((review) => (
+                <Box
+                  key={review.id}
+                  sx={{ display: "flex", alignItems: "center", mb: 2 }}
+                >
+                  {/* Аватар пользователя */}
+                  <Avatar sx={{ bgcolor: "gray", mr: 2 }}>
+                    <PersonIcon />
+                  </Avatar>
+                  <Box>
+                    {/* Имя пользователя */}
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {review.user.fullName}
+                    </Typography>
+                    {/* Рейтинг */}
+                    <Typography variant="body2" color="textSecondary">
+                      Оцінка: {review.rating} ⭐
+                    </Typography>
+                    {/* Текст отзыва */}
+                    <Typography variant="body1">{review.content}</Typography>
+                    <Divider sx={{ mt: 1 }} />
+                  </Box>
                 </Box>
-              </Box>
-            ))
-          ) : (
-            <Typography variant="body1" color="textSecondary">
-              Поки відгуків немає. Будьте першим, хто залишить відгук!
-            </Typography>
-          )}
-        </Box>
+              ))
+            ) : (
+              <Typography variant="body1" color="textSecondary">
+                Поки відгуків немає. Будьте першим, хто залишить відгук!
+              </Typography>
+            )}
+          </Box>
         )}
       </Box>
     </Container>

@@ -67,3 +67,21 @@ export async function getOrdersByUserId(userId: string) {
 
   return response.json();
 }
+export async function fetchOrders() {
+  const token = localStorage.getItem('user');
+  const Authorization = token ? JSON.parse(token).accessToken : null;
+
+  const response = await fetch(`${API_URL}/orders`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(Authorization && { Authorization: `Bearer ${Authorization}` }),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Помилка отримання замовлень користувача');
+  }
+
+  return response.json();
+}
