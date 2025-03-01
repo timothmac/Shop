@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -8,15 +8,45 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private jwtService: JwtService,
   ) {}
 
+  /**
+   * Ініціалізація модуля, створення адміністратора, якщо його немає.
+   */
+  async onModuleInit() {
+    await this.createAdminIfNotExists();
+  }
+
+  /**
+   * Перевіряє, чи є адміністратор у базі даних, якщо немає — створює.
+   */
+  private async createAdminIfNotExists() {
+    const existingAdmin = await this.usersRepository.findOne({ where: { role: 'admin' } });
+
+    if (!existingAdmin) {
+      const adminPassword = 'admin123'; // Пароль за замовчуванням
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+      const adminUser = this.usersRepository.create({
+        email: 'admin@example.com',
+        password: hashedPassword,
+        role: 'admin',
+        fullName: 'Адміністратор',
+        city: 'Київ',
+        phoneNumber: '+380501234567',
+      });
+
+      await this.usersRepository.save(adminUser);
+      console.log('✅ Адміністратор створений: admin@example.com / Пароль: admin123');
+    }
+  }
+
   async create(createUserDto: CreateUserDto): Promise<User> {
-    // Перевірка, чи існує користувач із заданою поштою
     const existingUser = await this.usersRepository.findOne({ where: { email: createUserDto.email } });
     if (existingUser) {
       throw new ConflictException('Email уже використовується');
@@ -43,7 +73,6 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<{ user: User; accessToken: string }> {
-    // Якщо в updateUserDto передано email, перевіряємо, чи він не використовується іншим користувачем
     if (updateUserDto.email) {
       const existingUser = await this.usersRepository.findOne({ where: { email: updateUserDto.email } });
       if (existingUser && existingUser.id !== id) {
@@ -51,7 +80,6 @@ export class UsersService {
       }
     }
 
-    // Якщо оновлюється пароль, його необхідно захешувати
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
